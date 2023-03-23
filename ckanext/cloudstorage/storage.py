@@ -8,6 +8,7 @@ from ast import literal_eval
 from datetime import datetime, timedelta
 from tempfile import SpooledTemporaryFile
 
+import ckan
 from ckan.common import config
 from ckan import model
 from ckan.lib import munge
@@ -273,6 +274,15 @@ class ResourceCloudStorage(CloudStorage):
             self.file_upload = _get_underlying_file(upload_field_storage)
             resource['url'] = self.filename
             resource['url_type'] = 'upload'
+
+            # Set File Size
+            if upload_field_storage.filename:
+                self.filesize = 0  # bytes
+                self.upload_file = _get_underlying_file(upload_field_storage)
+                self.upload_file.seek(0, os.SEEK_END)
+                self.filesize = self.upload_file.tell()
+                self.upload_file.seek(0, os.SEEK_SET)
+
         elif multipart_name and self.can_use_advanced_aws:
             # This means that file was successfully uploaded and stored
             # at cloud.
@@ -369,6 +379,26 @@ class ResourceCloudStorage(CloudStorage):
                 # for it to not yet exist in a committed state due to an
                 # outstanding lease.
                 return
+
+        # Update Dataset Size
+        if self.package:
+            total_size = 0
+            resources = model.Session.query(model.Resource).filter_by(
+                package_id=self.package.id, state='active').all()
+            for resource in resources:
+                if resource.size:
+                    total_size += resource.size
+
+            extra = model.Session.query(model.PackageExtra).filter_by(
+                package_id=self.package.id, key='size').all()
+            if extra:
+                extra = extra[0]
+                extra.value = total_size
+                extra.save()
+
+                if self._clear and self.old_filename and not self.leave_files and len(resources) == 1:
+                    extra.value = 0
+                    extra.save()
 
     def get_url_from_filename(self, rid, filename, content_type=None):
         """
