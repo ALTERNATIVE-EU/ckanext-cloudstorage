@@ -21,7 +21,6 @@ setup(
         'ckanapi>=1.0,<5',
         'google-auth==2.11.0',
         'six==1.16.0',
-        'routes==2.5.1',
         'cryptography==37.0.4'
     ],
     entry_points=(
