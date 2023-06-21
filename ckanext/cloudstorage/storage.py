@@ -270,9 +270,10 @@ class ResourceCloudStorage(CloudStorage):
 
         # Check to see if a file has been provided
         if isinstance(upload_field_storage, (ALLOWED_UPLOAD_TYPES)):
-            self.filename = munge.munge_filename(upload_field_storage.filename)
+            if upload_field_storage.filename:
+                self.filename = munge.munge_filename(upload_field_storage.filename)
             self.file_upload = _get_underlying_file(upload_field_storage)
-            if self.filename != '___':
+            if self.filename:
                 resource['url'] = self.filename
             resource['url_type'] = 'upload'
 
