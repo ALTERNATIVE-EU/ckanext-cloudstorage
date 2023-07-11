@@ -1,3 +1,4 @@
+from ast import literal_eval
 import os
 import json
 
@@ -32,7 +33,7 @@ CONTAINER_NAME = config.get('ckanext.cloudstorage.container_name')
 # 
 # format: {"key": "key", "secret": "secret", "region": "region"}
 # 
-DRIVER_OPTIONS = {'key': '', 'secret': ''}
+DRIVER_OPTIONS = literal_eval(config['ckanext.cloudstorage.driver_options'])
 
 
 # Path to Google credentials JSON file - needed only when using Google
