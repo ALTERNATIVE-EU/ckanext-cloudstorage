@@ -119,7 +119,7 @@ class CloudStoragePlugin(plugins.SingletonPlugin):
 
         required_keys = (
             'ckanext.cloudstorage.driver',
-            # 'ckanext.cloudstorage.driver_options',
+            'ckanext.cloudstorage.driver_options',
             'ckanext.cloudstorage.container_name'
         )
 
