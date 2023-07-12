@@ -365,7 +365,7 @@ class ResourceCloudStorage(CloudStorage):
                     )
                 )
 
-                # To use this add 'webpage_view' in plugins
+                # To use this add 'webpage_view' in plugins in the .ini file
                 # Create view for resource
                 resource = model.Session.query(model.Resource).filter_by(
                     id=id).all()[0]
