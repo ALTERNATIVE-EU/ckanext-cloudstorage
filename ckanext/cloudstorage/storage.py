@@ -13,6 +13,7 @@ from ckan.common import config
 from ckan import model
 from ckan.lib import munge
 import ckan.plugins as p
+from ckan.lib import helpers
 
 from libcloud.storage.types import Provider, ObjectDoesNotExistError
 from libcloud.storage.providers import get_driver
@@ -363,6 +364,53 @@ class ResourceCloudStorage(CloudStorage):
                         self.filename
                     )
                 )
+
+                # To use this add 'webpage_view' in plugins
+                # Create view for resource
+                resource = model.Session.query(model.Resource).filter_by(
+                    id=id).all()[0]
+                views = model.Session.query(model.ResourceView).filter_by(
+                    resource_id=id,
+                    view_type="webpage_view",
+                    title="Generated View"
+                ).all()
+                if views:
+                    views[0].config = {
+                        "page_url":
+                        config.get('ckan.site_url') +
+                        "/dataset/" +
+                        resource.package_id +
+                        "/resource/" +
+                        id +
+                        "/download/" +
+                        resource.url
+                    }
+                    views[0].save()
+                else:
+                    res_view = model.ResourceView(
+                        resource_id=id,
+                        title="Generated View",
+                        view_type="webpage_view",
+                        order=0,
+                        config={
+                            "page_url":
+                            config.get('ckan.site_url') +
+                            "/dataset/" +
+                            resource.package_id +
+                            "/resource/" +
+                            id +
+                            "/download/" +
+                            resource.url
+                        }
+                    )
+                    res_view.save()
+
+                    all_views = model.Session.query(model.ResourceView).filter_by(
+                        resource_id=id
+                    ).all()
+                    for view in all_views:
+                        if view.view_type != "webpage_view":
+                            view.delete()
 
         elif self._clear and self.old_filename and not self.leave_files:
             # This is only set when a previously-uploaded file is replace
