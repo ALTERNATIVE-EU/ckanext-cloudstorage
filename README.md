@@ -36,3 +36,8 @@ CKAN extension that implements support for S3 Cloud Storage. This is a modified 
    . /usr/lib/ckan/default/bin/activate
    sudo ckan -c /etc/ckan/default/ckan.ini run
    ```
+
+6. Execute Migrations
+   ```
+   ckan -c ckan.ini db upgrade -p cloudstorage
+   ```

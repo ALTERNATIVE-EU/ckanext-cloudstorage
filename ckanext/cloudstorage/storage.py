@@ -220,6 +220,15 @@ class ResourceCloudStorage(CloudStorage):
             self.file_upload = _get_underlying_file(upload_field_storage)
             resource["url"] = self.filename
             resource["url_type"] = "upload"
+
+            # Set File Size
+            if upload_field_storage.filename:
+                self.filesize = 0  # bytes
+                self.upload_file = _get_underlying_file(upload_field_storage)
+                self.upload_file.seek(0, os.SEEK_END)
+                self.filesize = self.upload_file.tell()
+                self.upload_file.seek(0, os.SEEK_SET)
+
             resource["last_modified"] = datetime.utcnow()
         elif multipart_name and self.can_use_advanced_aws:
             # This means that file was successfully uploaded and stored
@@ -384,6 +393,26 @@ class ResourceCloudStorage(CloudStorage):
                 # for it to not yet exist in a committed state due to an
                 # outstanding lease.
                 return
+            
+        # Update Dataset Size
+        if self.package:
+            total_size = 0
+            resources = model.Session.query(model.Resource).filter_by(
+                package_id=self.package.id, state='active').all()
+            for resource in resources:
+                if resource.size:
+                    total_size += resource.size
+
+            dataset_size = model.Session.query(model.PackageExtra).filter_by(
+                package_id=self.package.id, key='size').all()
+            if dataset_size:
+                dataset_size = dataset_size[0]
+                dataset_size.value = total_size
+                dataset_size.save()
+
+                if self._clear and self.old_filename and not self.leave_files and len(resources) == 1:
+                    dataset_size.value = 0
+                    dataset_size.save()
 
     def get_url_from_filename(self, rid, filename, content_type=None):
         path = self.path_from_filename(rid, filename)
